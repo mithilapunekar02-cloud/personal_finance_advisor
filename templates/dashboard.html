@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="dashboard">
+  <div class="dash-head">
+    <div><div class="pill">PERSONAL FINANCE</div><h1>Hello, {{ user.name.split()[0] }} 👋</h1><p class="muted">Here is your current financial snapshot.</p></div>
+    <button class="btn" onclick="openModal('transactionModal')">+ Add transaction</button>
+  </div>
+
+  <section class="stats">
+    <div class="stat"><span>Total income</span><strong>₹{{ "{:,.0f}".format(income) }}</strong><small>Recorded income</small></div>
+    <div class="stat"><span>Total expenses</span><strong>₹{{ "{:,.0f}".format(expense) }}</strong><small>Recorded expenses</small></div>
+    <div class="stat"><span>Balance</span><strong>₹{{ "{:,.0f}".format(balance) }}</strong><small>{{ "Positive" if balance >= 0 else "Needs attention" }}</small></div>
+  </section>
+
+  <section class="grid">
+    <div class="panel wide"><div class="panel-title"><h2>Spending analysis</h2><span>All recorded expenses</span></div><canvas id="expenseChart"></canvas></div>
+    <div class="panel"><div class="panel-title"><h2>AI advisor</h2><span>Personalized insights</span></div><button class="outline full" onclick="getAdvice()">Generate insights</button><div id="advice" class="advice muted">Click the button to analyze your recorded finances.</div></div>
+  </section>
+
+  <section class="grid">
+    <div class="panel wide">
+      <div class="panel-title"><h2>Recent transactions</h2><button class="text-button" onclick="openModal('transactionModal')">Add new</button></div>
+      {% if transactions %}
+      <div class="table-wrap"><table><thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Note</th><th>Amount</th></tr></thead><tbody>
+      {% for t in transactions %}<tr><td>{{ t.date }}</td><td><span class="tag {{ t.kind }}">{{ t.kind }}</span></td><td>{{ t.category }}</td><td>{{ t.note or "—" }}</td><td class="{{ t.kind }}">{{ "+" if t.kind == "income" else "-" }}₹{{ "{:,.0f}".format(t.amount) }}</td></tr>{% endfor %}
+      </tbody></table></div>
+      {% else %}<div class="empty">No transactions yet. Add your first income or expense.</div>{% endif %}
+    </div>
+    <div class="panel"><div class="panel-title"><h2>Budget planner</h2></div>
+      <form id="budgetForm" class="compact">
+        <input name="category" placeholder="Category e.g. Food" required>
+        <input name="amount" type="number" min="1" placeholder="Budget amount ₹" required>
+        <button class="btn full">Set budget</button>
+      </form>
+      <div class="budget-list">
+      {% for b in budgets %}<div class="budget-item"><span>{{ b.category }}</span><b>₹{{ "{:,.0f}".format(b.amount) }}</b></div>{% else %}<p class="muted">No budgets set yet.</p>{% endfor %}
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="modal" id="transactionModal"><div class="modal-card"><button class="close" onclick="closeModal('transactionModal')">×</button><div class="pill">NEW TRANSACTION</div><h2>Add income or expense</h2>
+<form id="transactionForm" class="compact" onsubmit="saveTransaction(event)">
+<select name="kind"><option value="expense">Expense</option><option value="income">Income</option></select>
+<input name="category" placeholder="Category e.g. Food" required>
+<input name="amount" type="number" min="1" step="0.01" placeholder="Amount ₹" required>
+<input name="note" placeholder="Note (optional)">
+<button class="btn full">Save transaction</button>
+</form></div></div>
+
+<script>
+    window.expenseData = {};
+{% set cats = {} %}
+{% for t in transactions %}
+  {% if t.kind == 'expense' %}{% set _ = cats.update({t.category: cats.get(t.category, 0) + t.amount}) %}{% endif %}
+{% endfor %}
+window.expenseData = {{ cats|tojson }};
+</script>
+<script>
+function openModal(id) {
+  const modal = document.getElementById(id);
+  if (modal) {
+    modal.style.display = "flex";
+  }
+}
+
+function closeModal(id) {
+  const modal = document.getElementById(id);
+  if (modal) {
+    modal.style.display = "none";
+  }
+}
+</script>
+<script>
+function openModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) modal.style.display = "flex";
+}
+function closeModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) modal.style.display = "none";
+}
+async function saveTransaction(event) {
+    event.preventDefault();
+    const form = document.getElementById("transactionForm");
+    const data = {
+        kind: form.kind.value,
+        category: form.category.value,
+        amount: form.amount.value,
+        note: form.note.value
+    };
+    try {
+        const response = await fetch("/api/transaction", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        if (response.ok && result.ok) {
+            window.location.reload();
+        } else {
+            alert(result.error || "Could not save transaction");
+        }
+    } catch (error) {
+        alert("Could not connect to the server");
+    }
+}
+</script>
+<script>
+async function getAdvice() {
+    const box = document.getElementById("advice");
+    box.textContent = "Analyzing your finances...";
+
+    try {
+        const response = await fetch("/api/ai-advice", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"}
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.advice) {
+            box.innerHTML = result.advice.map(item => "<p>" + item + "</p>").join("");
+        } else {
+            box.textContent = result.error || "Could not generate insights.";
+        }
+    } catch (error) {
+        box.textContent = "Could not connect to the server.";
+    }
+}
+</script>
+{% endblock %}

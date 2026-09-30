@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="pill">{{ "CREATE ACCOUNT" if mode == "register" else "WELCOME BACK" }}</div>
+    <h1>{{ "Build your financial habit." if mode == "register" else "Welcome back." }}</h1>
+    <p class="muted">{{ "Create an account to start tracking your money." if mode == "register" else "Log in to view your personal finance dashboard." }}</p>
+    <form method="post">
+      {% if mode == "register" %}<label>Name<input name="name" required placeholder="Samrudhi"></label>{% endif %}
+      <label>Email<input type="email" name="email" required placeholder="you@example.com"></label>
+      <label>Password<input type="password" name="password" required placeholder="••••••••"></label>
+      <button class="btn full">{{ "Create account" if mode == "register" else "Login" }}</button>
+    </form>
+    <p class="switch">{{ "Already registered?" if mode == "register" else "New here?" }} <a href="{{ url_for('login' if mode == 'register' else 'register') }}">{{ "Login" if mode == "register" else "Create account" }}</a></p>
+  </div>
+</div>
+{% endblock %}

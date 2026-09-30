@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title or "FinWise" }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<nav class="nav">
+  <a class="brand" href="{{ url_for('index') }}"><span>₹</span> FinWise</a>
+  {% if session.get('user_id') %}
+  <div class="nav-right"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('logout') }}" class="logout">Logout</a></div>
+  {% else %}
+  <div class="nav-right"><a href="{{ url_for('login') }}">Login</a><a href="{{ url_for('register') }}" class="btn small">Get Started</a></div>
+  {% endif %}
+</nav>
+{% with messages = get_flashed_messages() %}
+  {% if messages %}<div class="flash">{{ messages[0] }}</div>{% endif %}
+{% endwith %}
+{% block content %}{% endblock %}
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
