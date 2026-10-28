@@ -1,6 +1,9 @@
 # Personal Finance Advisor Bot
 
 A student-friendly full-stack Flask project for an AI-powered personal finance management platform.
+ 
+Full documentation 
+https://docs.google.com/document/d/1YGCN3y00azXyACo4s22o-3UTq-GiuIwl/edit?usp=drivesdk&ouid=111108828297196725448&rtpof=true&sd=true
 
 ## Features
 - User registration and login
